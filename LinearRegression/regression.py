@@ -24,7 +24,7 @@ class StochasticGradientDescent:
                     self.w[j] += self.lr * (yi - self.pred(xi)) * xi[j]
             norm = np.linalg.norm(last - self.w)
             if print_norm:
-                print_norm
+                print(norm)
             if norm < self.eps:
                 break
 
