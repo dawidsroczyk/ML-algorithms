@@ -13,3 +13,4 @@ The project was for educational purposes
 * [Perceptron](Perceptron)
 * [Simplified SVM](SVM)
 * [Naive Bayes classifier](SpamClassification)
+* [Regression Tree](RegressionTree)
