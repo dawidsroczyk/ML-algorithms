@@ -4,15 +4,17 @@ from collections import deque
 
 class Node:
 
-    def __init__(self):
+    def __init__(self, depth: int = None):
         # left child
         self.left : Node = None
         # right child
         self.right : Node = None
         # function by which data is split
         self.compare_function : CompareFunction = None
-        # mean of the elements belonging to gis node
+        # mean of the elements belonging to this node
         self.mean : int = None
+        # depth of the node
+        self.depth : int = depth
 
 
 '''
@@ -38,9 +40,11 @@ class CompareFunction():
 
 class RegressionTree:
 
-    def __init__(self, alpha: int) -> None:
-        self.root = Node()
-        self.alpha = alpha
+
+    def __init__(self, max_samples_leaf: int, max_depth: int) -> None:
+        self.root = Node(depth=0)
+        self.max_samples_leaf = max_samples_leaf
+        self.max_depth = max_depth
         self.col_count = None
 
 
@@ -71,6 +75,8 @@ class RegressionTree:
         # depicting which training samples land there
         node_indexes = {}
         node_indexes[self.root] = np.full(row_count, True)
+
+        self.root.mean = np.mean(Y_np)
         
         # consider all nodes
         while len(todo_nodes) > 0:
@@ -107,18 +113,19 @@ class RegressionTree:
             # get best feature to split and best point to split it
             min_row, min_col = divmod(np.argmin(errors), errors.shape[1])
             # calculate split point in that feature
-            critical_point = X_node_sorted[min_row, min_col]
+            # critical_point = X_node_sorted[min_row, min_col] if min_row == 0 else (X_node_sorted[min_row, min_col] + X_node_sorted[min_row - 1, min_col]) / 2
+            critical_point = X_node_sorted[min_row, min_col] if min_row == X_node_sorted.shape[0] - 1 else (X_node_sorted[min_row, min_col] + X_node_sorted[min_row + 1, min_col]) / 2
 
             # define compare function
             node.compare_function = CompareFunction(critical_point, min_col, f'{X_cols[min_col]} >= {critical_point}')
 
             # create new left node
-            smaller_node = Node()
+            smaller_node = Node(node.depth + 1)
             node_indexes[smaller_node] = np.logical_and(node_idx, X_np[:, min_col] < critical_point)
             smaller_node.mean = np.mean(Y_np[node_indexes[smaller_node]])
 
             # create new right node
-            greater_node = Node()
+            greater_node = Node(node.depth + 1)
             node_indexes[greater_node] = np.logical_and(node_idx, X_np[:, min_col] >= critical_point)
             greater_node.mean = np.mean(Y_np[node_indexes[greater_node]])
 
@@ -134,10 +141,10 @@ class RegressionTree:
             node.left = smaller_node
             node.right = greater_node
 
-            # if splits are too large
-            if (c1 >= self.alpha or c2 >= self.alpha):
-                # split them further
+            # if splits are too large, split them further
+            if c1 > self.max_samples_leaf and smaller_node.depth <= self.max_depth:
                 todo_nodes.append(smaller_node)
+            if c2 > self.max_samples_leaf and greater_node.depth <= self.max_depth:
                 todo_nodes.append(greater_node)
 
 
@@ -164,3 +171,4 @@ class RegressionTree:
             res[i] = node.mean
         
         return res
+    
