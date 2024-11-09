@@ -2,7 +2,7 @@
 Repository contains implementation of some machine learning algorithms.
 
 ## Reason for creation
-The project was for educational purposes
+The project was created for educational purposes
 
 ## Technologies Used
 - Python 3.11
